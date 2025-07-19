@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Mesaj Analizi</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { max-width: 800px; margin-top: 50px; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .alert-message { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Instagram Mesaj Analizi</h1>
+        <p class="text-center">Instagram DM JSON dosyanızı yükleyerek iletişim tarzınızı anında analiz edin. Verileriniz sunucumuzda **kalıcı olarak kaydedilmez** ve analiz sonrası hemen silinir.</p>
+        
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="emailInput">E-posta Adresiniz (Analiz sonuçları buraya gönderilecektir):</label>
+                <input type="email" class="form-control" id="emailInput" name="email" required placeholder="örnek@mail.com">
+            </div>
+            <div class="form-group">
+                <label for="fileInput">Instagram Mesaj JSON Dosyalarını Seçin:</label>
+                <input type="file" class="form-control-file" id="fileInput" name="files[]" multiple accept=".json">
+                <small class="form-text text-muted">Birden fazla JSON dosyası seçebilirsiniz (eğer mesaj geçmişiniz birden fazla dosyaya bölünmüşse).</small>
+            </div>
+            <button type="submit" class="btn btn-success btn-block">Analiz Et ve Sonuçları E-postama Gönder</button>
+        </form>
+
+        <div id="message" class="alert-message text-center" style="display:none;"></div>
+
+        <hr class="my-4">
+
+        <h3 class="text-center mt-5">Önemli Yasal Bilgilendirme ve Gizlilik Politikası</h3>
+        <p class="text-muted">
+            Bu siteye yüklediğiniz Instagram DM JSON dosyasındaki metin verilerini analiz etmek için tasarlanmıştır. Dosyanız sunucumuzda geçici olarak işlenir ve analiz tamamlandıktan hemen sonra kalıcı olarak silinir. Hiçbir veri, izniniz olmadan saklanmaz veya üçüncü taraflarla paylaşılmaz. Analiz sonuçları belirttiğiniz e-posta adresine gönderilir ve bu e-posta adresi yalnızca bu amaç için kullanılır. Güvenliğiniz ve gizliliğiniz bizim için önceliklidir.
+        </p>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#uploadForm').submit(function(e) {
+                e.preventDefault();
+                
+                var formData = new FormData(this);
+                var messageDiv = $('#message');
+                messageDiv.hide().removeClass('alert-success alert-danger');
+
+                messageDiv.addClass('alert-info').text('Dosyalar yükleniyor ve e-posta gönderiliyor... Lütfen bekleyin.').show();
+
+                $.ajax({
+                    url: '/upload',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        messageDiv.removeClass('alert-info').addClass('alert-success').text(response.message).show();
+                        if (response.redirect_to) {
+                            setTimeout(function() {
+                                window.location.href = response.redirect_to;
+                            }, 2000);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        var errorMsg = "Bir hata oluştu. Lütfen tekrar deneyin.";
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMsg = xhr.responseJSON.error;
+                        }
+                        messageDiv.removeClass('alert-info').addClass('alert-danger').text(errorMsg).show();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

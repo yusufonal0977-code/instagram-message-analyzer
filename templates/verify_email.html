@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-posta Doğrulama</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .container { max-width: 600px; margin-top: 100px; background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .alert-message { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">E-posta Doğrulama</h1>
+        <p class="text-center">E-posta adresinize bir doğrulama kodu gönderildi. Lütfen kodu aşağıdaki alana giriniz.</p>
+        <p class="text-center text-muted">Spam/Junk klasörlerinizi kontrol etmeyi unutmayın.</p>
+        
+        <form id="verifyForm">
+            <div class="form-group">
+                <label for="verificationCode">Doğrulama Kodu:</label>
+                <input type="text" class="form-control" id="verificationCode" name="code" required maxlength="6" placeholder="Örn: 123456">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">E-postayı Doğrula ve Analizi Başlat</button>
+        </form>
+
+        <div id="message" class="alert-message text-center" style="display:none;"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#verifyForm').submit(function(e) {
+                e.preventDefault();
+                
+                var formData = new FormData(this);
+                var messageDiv = $('#message');
+                messageDiv.hide().removeClass('alert-success alert-danger alert-info');
+
+                messageDiv.addClass('alert-info').text('Doğrulanıyor ve analiz başlatılıyor... Lütfen bekleyin.').show();
+
+                $.ajax({
+                    url: '/verify_email',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        // Başarılı olduğunda doğrudan yeni sayfaya yönlendiriyoruz
+                        window.location.href = '/verify_email'; // app.py'nin render ettiği sayfaya yönlendirir
+                    },
+                    error: function(xhr, status, error) {
+                        var errorMsg = "Bir hata oluştu. Lütfen tekrar deneyin.";
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMsg = xhr.responseJSON.error;
+                        }
+                        messageDiv.removeClass('alert-info').addClass('alert-danger').text(errorMsg).show();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
